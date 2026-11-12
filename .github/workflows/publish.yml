@@ -26,11 +26,17 @@ jobs:
         run: dotnet workload install maui-windows --skip-manifest-update
 
       - name: Publish Windows app
-        run: dotnet publish "HQ Character Tracker/HQ Character Tracker.csproj" -f net10.0-windows10.0.19041.0 -c Release -p:RuntimeIdentifierOverride=win10-x64 -p:WindowsPackageType=None -p:WindowsAppSDKSelfContained=true -o "${{ github.workspace }}/artifacts/windows-x64"
+        run: dotnet publish "HQ Character Tracker/HQ Character Tracker.csproj" -f net10.0-windows10.0.19041.0 -c Release -p:RuntimeIdentifierOverride=win10-x64 -p:WindowsPackageType=None -p:WindowsAppSDKSelfContained=true -o "${{ github.workspace }}/artifacts/publish/windows-x64"
 
-      - name: Upload Windows app
+      - name: Install WiX CLI
+        run: dotnet tool install --tool-path "$env:RUNNER_TEMP\wix-tools" wix --version 5.0.2
+
+      - name: Build Windows MSI
+        run: '& "$env:RUNNER_TEMP\wix-tools\wix.exe" build installer/HQCharacterTracker.wxs -arch x64 -d ProductVersion=1.0.${{ github.run_number }} -bindpath "publish=artifacts/publish/windows-x64" -out "artifacts/HQ-Character-Tracker-Setup.msi"'
+
+      - name: Upload Windows MSI
         uses: actions/upload-artifact@v4
         with:
-          name: windows-x64
-          path: artifacts/windows-x64/
+          name: HQ-Character-Tracker-MSI
+          path: artifacts/HQ-Character-Tracker-Setup.msi
           if-no-files-found: error

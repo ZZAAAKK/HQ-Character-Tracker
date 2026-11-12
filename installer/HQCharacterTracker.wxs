@@ -1,0 +1,33 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+	<Package Name="HQ Character Tracker" Manufacturer="HQ Character Tracker" Version="$(var.ProductVersion)" UpgradeCode="{B8E60BA2-4252-4A80-B797-CF0B765F1D72}" Scope="perUser">
+	<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+	<MediaTemplate EmbedCab="yes" />
+
+	<Feature Id="ProductFeature" Title="HQ Character Tracker" Level="1">
+	  <ComponentGroupRef Id="PublishedFiles" />
+	  <ComponentRef Id="StartMenuShortcut" />
+	</Feature>
+
+	<StandardDirectory Id="LocalAppDataFolder">
+	  <Directory Id="INSTALLFOLDER" Name="HQ Character Tracker" />
+	</StandardDirectory>
+
+	<StandardDirectory Id="ProgramMenuFolder">
+	  <Directory Id="ApplicationProgramsFolder" Name="HQ Character Tracker" />
+	</StandardDirectory>
+  </Package>
+
+  <Fragment>
+	<ComponentGroup Id="PublishedFiles" Directory="INSTALLFOLDER">
+	  <Files Include="!(bindpath.publish)\**" />
+	</ComponentGroup>
+
+	<DirectoryRef Id="ApplicationProgramsFolder">
+	  <Component Id="StartMenuShortcut" Guid="{64412E11-B42A-42E8-8A9B-3C2AD7649214}">
+		<Shortcut Id="ApplicationShortcut" Name="HQ Character Tracker" Target="[INSTALLFOLDER]HQ Character Tracker.exe" WorkingDirectory="INSTALLFOLDER" />
+		<RemoveFolder Id="RemoveApplicationProgramsFolder" On="uninstall" />
+		<RegistryValue Root="HKCU" Key="Software\HQ Character Tracker" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+	  </Component>
+	</DirectoryRef>
+  </Fragment>
+</Wix>
