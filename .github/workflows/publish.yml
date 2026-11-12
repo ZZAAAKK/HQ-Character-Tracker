@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   publish-windows:
@@ -33,6 +33,14 @@ jobs:
 
       - name: Build Windows MSI
         run: '& "$env:RUNNER_TEMP\wix-tools\wix.exe" build installer/HQCharacterTracker.wxs -arch x64 -d ProductVersion=1.0.${{ github.run_number }} -bindpath "publish=artifacts/publish/windows-x64" -out "artifacts/HQ-Character-Tracker-Setup.msi"'
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: HQ Character Tracker v1.0.${{ github.run_number }}
+          files: artifacts/HQ-Character-Tracker-Setup.msi
+          make_latest: true
 
       - name: Upload Windows MSI
         uses: actions/upload-artifact@v4
