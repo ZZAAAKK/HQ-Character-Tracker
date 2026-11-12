@@ -1,0 +1,11 @@
+{
+  "equipment": [
+    { "name": "Shortsword", "type": "Weapon", "description": "A balanced one-handed blade for close combat." },
+    { "name": "Battle Axe", "type": "Weapon", "description": "A heavy axe that delivers a powerful melee strike." },
+    { "name": "Crossbow", "type": "Weapon", "description": "A ranged weapon for attacking enemies from a distance." },
+    { "name": "Shield", "type": "Armour", "description": "A sturdy shield that helps protect its bearer." },
+    { "name": "Helmet", "type": "Armour", "description": "Protective headgear for a questing hero." },
+    { "name": "Healing Potion", "type": "Potion", "description": "A restorative draught for a wounded hero." },
+    { "name": "Torch", "type": "Utility", "description": "Provides light in dark corridors and chambers." }
+  ]
+}

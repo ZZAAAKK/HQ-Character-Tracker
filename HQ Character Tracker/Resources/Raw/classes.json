@@ -1,0 +1,8 @@
+{
+  "classes": [
+    { "name": "Barbarian", "bodyPoints": 8, "mindPoints": 2, "attackDice": 3, "defenceDice": 2 },
+    { "name": "Dwarf", "bodyPoints": 7, "mindPoints": 3, "attackDice": 2, "defenceDice": 2 },
+    { "name": "Elf", "bodyPoints": 6, "mindPoints": 4, "attackDice": 2, "defenceDice": 2 },
+    { "name": "Wizard", "bodyPoints": 4, "mindPoints": 6, "attackDice": 1, "defenceDice": 2 }
+  ]
+}

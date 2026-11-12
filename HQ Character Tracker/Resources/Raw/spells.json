@@ -1,0 +1,10 @@
+{
+  "spells": [
+    { "name": "Heal Body", "school": "Earth", "description": "Restore lost Body Points to a hero." },
+    { "name": "Pass Through Rock", "school": "Earth", "description": "Move through solid rock as though it were open ground." },
+    { "name": "Swift Wind", "school": "Air", "description": "Call on the wind to grant a burst of speed." },
+    { "name": "Tempest", "school": "Air", "description": "Unleash a storm of wind against an enemy." },
+    { "name": "Fire of Wrath", "school": "Fire", "description": "Strike a foe with magical fire." },
+    { "name": "Courage", "school": "Water", "description": "Bolster a hero's resolve for the challenges ahead." }
+  ]
+}
