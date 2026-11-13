@@ -28,11 +28,27 @@ jobs:
       - name: Publish Windows app
         run: dotnet publish "HQ Character Tracker/HQ Character Tracker.csproj" -f net10.0-windows10.0.19041.0 -c Release -p:RuntimeIdentifierOverride=win10-x64 -p:WindowsPackageType=None -p:WindowsAppSDKSelfContained=true -o "${{ github.workspace }}/artifacts/publish/windows-x64"
 
+      - name: Verify published app exists
+        shell: pwsh
+        run: |
+          $app = Join-Path "${{ github.workspace }}" "artifacts/publish/windows-x64/HQ Character Tracker.exe"
+          if (!(Test-Path -LiteralPath $app -PathType Leaf)) {
+            throw "Published application executable not found: $app"
+          }
+
       - name: Install WiX CLI
         run: dotnet tool install --tool-path "$env:RUNNER_TEMP\wix-tools" wix --version 5.0.2
 
       - name: Build Windows MSI
-        run: '& "$env:RUNNER_TEMP\wix-tools\wix.exe" build installer/HQCharacterTracker.wxs -arch x64 -d ProductVersion=1.0.${{ github.run_number }} -bindpath "publish=artifacts/publish/windows-x64" -out "artifacts/HQ-Character-Tracker-Setup.msi"'
+        run: '& "$env:RUNNER_TEMP\wix-tools\wix.exe" build installer/HQCharacterTracker.wxs -arch x64 -wx -d ProductVersion=1.0.${{ github.run_number }} -bindpath "publish=${{ github.workspace }}\artifacts\publish\windows-x64" -out "artifacts/HQ-Character-Tracker-Setup.msi"'
+
+      - name: Verify MSI size
+        shell: pwsh
+        run: |
+          $msi = Get-Item -LiteralPath "${{ github.workspace }}\artifacts\HQ-Character-Tracker-Setup.msi"
+          if ($msi.Length -lt 1MB) {
+            throw "MSI is unexpectedly small ($($msi.Length) bytes); published application files may be missing."
+          }
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
