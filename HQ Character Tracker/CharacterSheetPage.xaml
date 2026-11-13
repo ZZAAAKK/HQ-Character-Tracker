@@ -4,35 +4,39 @@
              x:Class="HQ_Character_Tracker.CharacterSheetPage"
              Title="HeroQuest Character Tracker"
              BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark=#111821}">
-    <ScrollView>
-        <VerticalStackLayout Padding="24,20" Spacing="18">
-            <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="12">
-                <VerticalStackLayout Spacing="2" VerticalOptions="Center">
-                    <Label Text="HEROQUEST" FontSize="14" FontAttributes="Bold" TextColor="#9A6B2F" CharacterSpacing="2" />
-                    <Label Text="Character Sheets" FontSize="30" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#202A36, Dark=#F2F4F7}" />
-                    <Label Text="Manage your heroes, gear, and abilities" FontSize="14" TextColor="{AppThemeBinding Light=#667085, Dark=#B0BAC7}" />
-                </VerticalStackLayout>
-                <Button Grid.Column="1" x:Name="SaveRosterButton" Text="Save Roster" BackgroundColor="#9A6B2F" TextColor="White" VerticalOptions="Center" />
-                <Button Grid.Column="2" x:Name="LoadRosterButton" Text="Load Roster" Clicked="OnOpenClicked" BackgroundColor="#34465A" TextColor="White" VerticalOptions="Center" />
-                <Picker Grid.Column="3" x:Name="ThemePicker" Title="Theme" TitleColor="#667085" TextColor="{AppThemeBinding Light=#202A36, Dark=#F2F4F7}" BackgroundColor="{AppThemeBinding Light=#F7F8FA, Dark=#263445}" VerticalOptions="Center" />
-            </Grid>
-            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
-                <Grid WidthRequest="52" HeightRequest="104">
-                    <Button x:Name="PreviousButton" Padding="0" WidthRequest="52" HeightRequest="104" CornerRadius="26" BackgroundColor="#34465A" TextColor="White" SemanticProperties.Hint="Show previous character sheet" />
-                    <Label Text="❮" FontSize="30" TextColor="White" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" InputTransparent="True" />
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="24,20" Spacing="18">
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="12">
+                    <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                        <Label Text="Character Sheets" FontSize="30" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#202A36, Dark=#F2F4F7}" />
+                        <Label Text="Manage your heroes, gear, and abilities" FontSize="14" TextColor="{AppThemeBinding Light=#667085, Dark=#B0BAC7}" />
+                    </VerticalStackLayout>
+                    <Button Grid.Column="1" x:Name="SaveRosterButton" Text="Save Roster" BackgroundColor="#9A6B2F" TextColor="White" VerticalOptions="Center" />
+                    <Button Grid.Column="2" x:Name="LoadRosterButton" Text="Load Roster" Clicked="OnOpenClicked" BackgroundColor="#34465A" TextColor="White" VerticalOptions="Center" />
+                    <Button Grid.Column="3" x:Name="ManageCatalogButton" Text="Custom Items" BackgroundColor="#34465A" TextColor="White" VerticalOptions="Center" />
+                    <Picker Grid.Column="4" x:Name="ThemePicker" Title="Theme" TitleColor="#667085" TextColor="{AppThemeBinding Light=#202A36, Dark=#F2F4F7}" BackgroundColor="{AppThemeBinding Light=#F7F8FA, Dark=#263445}" VerticalOptions="Center" />
                 </Grid>
-                <ScrollView Grid.Column="1" x:Name="SheetScroll" Orientation="Horizontal" HorizontalScrollBarVisibility="Never" VerticalScrollBarVisibility="Never" Scrolled="OnCarouselScrolled">
-                    <HorizontalStackLayout x:Name="CharacterCards" Spacing="14" Padding="0,8" HorizontalOptions="Start" />
-                </ScrollView>
-                <Grid Grid.Column="2" WidthRequest="52" HeightRequest="104">
-                    <Button x:Name="NextButton" Padding="0" WidthRequest="52" HeightRequest="104" CornerRadius="26" BackgroundColor="#34465A" TextColor="White" SemanticProperties.Hint="Show next character sheet" />
-                    <Label Text="❯" FontSize="30" TextColor="White" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" InputTransparent="True" />
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                    <Grid WidthRequest="52" HeightRequest="104">
+                        <Button x:Name="PreviousButton" Padding="0" WidthRequest="52" HeightRequest="104" CornerRadius="26" BackgroundColor="#34465A" TextColor="White" SemanticProperties.Hint="Show previous character sheet" />
+                        <Label Text="❮" FontSize="30" TextColor="White" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" InputTransparent="True" />
+                    </Grid>
+                    <ScrollView Grid.Column="1" x:Name="SheetScroll" Orientation="Horizontal" HorizontalScrollBarVisibility="Never" VerticalScrollBarVisibility="Never" Scrolled="OnCarouselScrolled">
+                        <HorizontalStackLayout x:Name="CharacterCards" Spacing="14" Padding="0,8" HorizontalOptions="Start" />
+                    </ScrollView>
+                    <Grid Grid.Column="2" WidthRequest="52" HeightRequest="104">
+                        <Button x:Name="NextButton" Padding="0" WidthRequest="52" HeightRequest="104" CornerRadius="26" BackgroundColor="#34465A" TextColor="White" SemanticProperties.Hint="Show next character sheet" />
+                        <Label Text="❯" FontSize="30" TextColor="White" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" InputTransparent="True" />
+                    </Grid>
                 </Grid>
-            </Grid>
+            </VerticalStackLayout>
+        </ScrollView>
+        <Border Grid.Row="1" Padding="24,10" StrokeThickness="0" BackgroundColor="{AppThemeBinding Light=#E9EDF2, Dark=#1D2935}">
             <Grid ColumnDefinitions="*,Auto">
                 <Label x:Name="StatusLabel" Text="Ready" FontSize="12" TextColor="{AppThemeBinding Light=#667085, Dark=#B0BAC7}" />
                 <Label Grid.Column="1" x:Name="CarouselPositionLabel" FontSize="12" TextColor="{AppThemeBinding Light=#667085, Dark=#B0BAC7}" HorizontalOptions="End" />
             </Grid>
-        </VerticalStackLayout>
-    </ScrollView>
+        </Border>
+    </Grid>
 </ContentPage>

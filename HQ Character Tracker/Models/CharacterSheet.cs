@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace HQ_Character_Tracker.Models;
 
 public sealed class CharacterSheet
@@ -26,6 +28,8 @@ public sealed class CharacterClassCatalog
 
 public sealed class CharacterClassSetting
 {
+    [JsonIgnore]
+    public bool IsCustom { get; set; }
     public string Name { get; set; } = string.Empty;
     public int BodyPoints { get; set; }
     public int MindPoints { get; set; }
@@ -40,6 +44,8 @@ public sealed class EquipmentCatalog
 
 public sealed class EquipmentSetting
 {
+    [JsonIgnore]
+    public bool IsCustom { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
@@ -52,6 +58,8 @@ public sealed class SpellCatalog
 
 public sealed class SpellSetting
 {
+    [JsonIgnore]
+    public bool IsCustom { get; set; }
     public string Name { get; set; } = string.Empty;
     public string School { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;

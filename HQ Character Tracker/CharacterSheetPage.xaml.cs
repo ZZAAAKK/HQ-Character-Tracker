@@ -15,8 +15,8 @@ public partial class CharacterSheetPage : ContentPage
     private readonly List<CharacterSheet> _characters = [new()];
     private int _currentCarouselIndex;
     private CharacterClassCatalog _classCatalog = new();
-    private List<string> _equipmentOptions = [];
-    private List<string> _spellOptions = [];
+    private List<CatalogSelectionOption> _equipmentOptions = [];
+    private List<CatalogSelectionOption> _spellOptions = [];
     private Dictionary<string, string> _equipmentDescriptions = new(StringComparer.OrdinalIgnoreCase);
     private Dictionary<string, string> _spellDescriptions = new(StringComparer.OrdinalIgnoreCase);
     private bool _isDescriptionModalOpen;
@@ -34,6 +34,11 @@ public partial class CharacterSheetPage : ContentPage
         }
         if (FindByName("LoadRosterButton") is Button loadRosterButton)
             ApplyButtonHoverFeedback(loadRosterButton);
+        if (FindByName("ManageCatalogButton") is Button manageCatalogButton)
+        {
+            manageCatalogButton.Clicked += OnManageCatalogClicked;
+            ApplyButtonHoverFeedback(manageCatalogButton);
+        }
         if (FindByName("ThemePicker") is Picker themePicker)
         {
             themePicker.ItemsSource = new[] { "Light", "Dark", "System" };
@@ -72,31 +77,24 @@ public partial class CharacterSheetPage : ContentPage
             return;
 
         if (_keyboardAcceleratorRoot is not null)
-            _keyboardAcceleratorRoot.KeyboardAccelerators.Clear();
+            _keyboardAcceleratorRoot.KeyDown -= OnCarouselKeyDown;
 
         _keyboardAcceleratorRoot = root;
-        var previousAccelerator = new Microsoft.UI.Xaml.Input.KeyboardAccelerator
-        {
-            Key = Windows.System.VirtualKey.Left
-        };
-        previousAccelerator.Invoked += (_, args) =>
+        root.KeyDown += OnCarouselKeyDown;
+    }
+
+    private void OnCarouselKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs args)
+    {
+        if (args.Key == Windows.System.VirtualKey.Left)
         {
             args.Handled = true;
             MainThread.BeginInvokeOnMainThread(() => OnPreviousCardClicked(this, EventArgs.Empty));
-        };
-
-        var nextAccelerator = new Microsoft.UI.Xaml.Input.KeyboardAccelerator
-        {
-            Key = Windows.System.VirtualKey.Right
-        };
-        nextAccelerator.Invoked += (_, args) =>
+        }
+        else if (args.Key == Windows.System.VirtualKey.Right)
         {
             args.Handled = true;
             MainThread.BeginInvokeOnMainThread(() => OnNextCardClicked(this, EventArgs.Empty));
-        };
-
-        root.KeyboardAccelerators.Add(previousAccelerator);
-        root.KeyboardAccelerators.Add(nextAccelerator);
+        }
     }
 #endif
 
@@ -113,13 +111,7 @@ public partial class CharacterSheetPage : ContentPage
     {
         try
         {
-            _classCatalog = await _dataService.LoadClassesAsync();
-            var equipment = (await _dataService.LoadEquipmentAsync()).Equipment;
-            _equipmentOptions = equipment.Select(item => item.Name).ToList();
-            _equipmentDescriptions = equipment.ToDictionary(item => item.Name, item => item.Description, StringComparer.OrdinalIgnoreCase);
-            var spells = (await _dataService.LoadSpellsAsync()).Spells;
-            _spellOptions = spells.Select(item => item.Name).ToList();
-            _spellDescriptions = spells.ToDictionary(item => item.Name, item => item.Description, StringComparer.OrdinalIgnoreCase);
+            await LoadCatalogsAsync();
         }
         catch (Exception exception)
         {
@@ -127,6 +119,36 @@ public partial class CharacterSheetPage : ContentPage
         }
 
         RebuildCharacterCards();
+#if WINDOWS
+        WindowsFileActivation.Register(OnAssociatedFileActivated);
+#endif
+    }
+
+    private async Task LoadCatalogsAsync()
+    {
+        _classCatalog = await _dataService.LoadClassesAsync();
+        var equipment = (await _dataService.LoadEquipmentAsync()).Equipment;
+        _equipmentOptions = equipment.Select(item => new CatalogSelectionOption(item.Name, item.IsCustom)).ToList();
+        _equipmentDescriptions = equipment.GroupBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First().Description, StringComparer.OrdinalIgnoreCase);
+        var spells = (await _dataService.LoadSpellsAsync()).Spells;
+        _spellOptions = spells.Select(item => new CatalogSelectionOption(item.Name, item.IsCustom)).ToList();
+        _spellDescriptions = spells.GroupBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First().Description, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private async void OnManageCatalogClicked(object? sender, EventArgs e)
+    {
+        await Navigation.PushModalAsync(new NavigationPage(new CustomCatalogPage(async () =>
+        {
+            await LoadCatalogsAsync();
+            RebuildCharacterCards();
+        })));
+    }
+
+    private sealed record CatalogSelectionOption(string Name, bool IsCustom)
+    {
+        public string DisplayName => IsCustom ? $"{Name} (custom)" : Name;
     }
 
     private void RebuildCharacterCards()
@@ -249,8 +271,8 @@ public partial class CharacterSheetPage : ContentPage
         AddToGrid(identityGrid, BuildField("Character name", nameEntry), 0, 0);
         var classPicker = new Picker
         {
-            ItemsSource = _classCatalog.Classes.Select(item => item.Name).ToList(),
-            SelectedItem = character.CharacterClass,
+            ItemsSource = _classCatalog.Classes.Select(item => item.IsCustom ? $"{item.Name} (custom)" : item.Name).ToList(),
+            SelectedIndex = _classCatalog.Classes.FindIndex(item => string.Equals(item.Name, character.CharacterClass, StringComparison.OrdinalIgnoreCase)),
             //Title = "Choose a class",
             TitleColor = ThemeColor("#667085", "#B0BAC7"),
             TextColor = ThemeColor("#202A36", "#F2F4F7"),
@@ -273,12 +295,10 @@ public partial class CharacterSheetPage : ContentPage
         var defenceDiceValue = CreatePointValueLabel(character.DefenceDice);
         classPicker.SelectedIndexChanged += (_, _) =>
         {
-            if (classPicker.SelectedItem is not string selectedClass)
+            if (classPicker.SelectedIndex < 0 || classPicker.SelectedIndex >= _classCatalog.Classes.Count)
                 return;
 
-            var definition = _classCatalog.Classes.FirstOrDefault(item => item.Name == selectedClass);
-            if (definition is null)
-                return;
+            var definition = _classCatalog.Classes[classPicker.SelectedIndex];
 
             character.CharacterClass = definition.Name;
             character.BodyPoints = character.MaximumBodyPoints = definition.BodyPoints;
@@ -713,7 +733,7 @@ public partial class CharacterSheetPage : ContentPage
         VerticalStackLayout itemHost,
         string placeholder,
         string selectionTitle,
-        List<string> options,
+        List<CatalogSelectionOption> options,
         List<string> selectedItems,
         List<string>? castItems = null,
         IReadOnlyDictionary<string, string>? descriptions = null)
@@ -746,7 +766,7 @@ public partial class CharacterSheetPage : ContentPage
 
     private async Task SelectCatalogItemAsync(
         string title,
-        List<string> options,
+        List<CatalogSelectionOption> options,
         List<string> selectedItems,
         VerticalStackLayout itemHost,
         string placeholder,
@@ -754,7 +774,8 @@ public partial class CharacterSheetPage : ContentPage
         IReadOnlyDictionary<string, string>? descriptions)
     {
         var availableOptions = options
-            .Where(option => !selectedItems.Contains(option, StringComparer.OrdinalIgnoreCase))
+            .GroupBy(option => option.Name, StringComparer.OrdinalIgnoreCase)
+            .SelectMany(group => group.Skip(selectedItems.Count(selected => string.Equals(selected, group.Key, StringComparison.OrdinalIgnoreCase))))
             .ToArray();
         if (availableOptions.Length == 0)
         {
@@ -762,11 +783,15 @@ public partial class CharacterSheetPage : ContentPage
             return;
         }
 
-        var selectedItem = await DisplayActionSheet(title, "Cancel", null, availableOptions);
+        var selectedItem = await DisplayActionSheet(title, "Cancel", null, availableOptions.Select(option => option.DisplayName).ToArray());
         if (string.IsNullOrWhiteSpace(selectedItem) || selectedItem == "Cancel")
             return;
 
-        selectedItems.Add(selectedItem);
+        var selectedOption = availableOptions.FirstOrDefault(option => string.Equals(option.DisplayName, selectedItem, StringComparison.Ordinal));
+        if (selectedOption is null)
+            return;
+
+        selectedItems.Add(selectedOption.Name);
         RefreshItemList(itemHost, selectedItems, placeholder, castItems, descriptions);
     }
 
@@ -1040,25 +1065,19 @@ public partial class CharacterSheetPage : ContentPage
     {
         try
         {
-            var file = await FilePicker.Default.PickAsync();
+            var file = await FilePicker.Default.PickAsync(new PickOptions
+            {
+                PickerTitle = "Open roster",
+                FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+                {
+                    [DevicePlatform.WinUI] = new[] { ".hqct", ".json" }
+                })
+            });
             if (file is null)
                 return;
 
             await using var stream = await file.OpenReadAsync();
-            var roster = await _dataService.LoadRosterAsync(stream);
-            if (roster.Count is 0 or > MaximumCharacterCount)
-            {
-                await DisplayAlert("Invalid roster", $"A roster must contain between 1 and {MaximumCharacterCount} characters.", "OK");
-                return;
-            }
-
-            _characters.Clear();
-            _characters.AddRange(roster);
-            _currentCarouselIndex = 0;
-            RebuildCharacterCards();
-            await Task.Yield();
-            await ScrollToCharacterAsync(0);
-            StatusLabel.Text = $"Loaded roster from {file.FileName}";
+            await LoadRosterFromStreamAsync(stream, file.FileName);
         }
         catch (JsonException exception)
         {
@@ -1070,11 +1089,58 @@ public partial class CharacterSheetPage : ContentPage
         }
     }
 
+#if WINDOWS
+    private void OnAssociatedFileActivated(string path) =>
+        MainThread.BeginInvokeOnMainThread(async () => await LoadRosterFromPathAsync(path));
+#endif
+
+    private async Task LoadRosterFromPathAsync(string path)
+    {
+        try
+        {
+            await using var stream = File.OpenRead(path);
+            await LoadRosterFromStreamAsync(stream, System.IO.Path.GetFileName(path));
+        }
+        catch (JsonException exception)
+        {
+            await DisplayAlert("Invalid character file", exception.Message, "OK");
+        }
+        catch (Exception exception)
+        {
+            await DisplayAlert("Could not open file", exception.Message, "OK");
+        }
+    }
+
+    private async Task LoadRosterFromStreamAsync(Stream stream, string fileName)
+    {
+        var roster = await _dataService.LoadRosterAsync(stream);
+        if (roster.Count is 0 or > MaximumCharacterCount)
+        {
+            await DisplayAlert("Invalid roster", $"A roster must contain between 1 and {MaximumCharacterCount} characters.", "OK");
+            return;
+        }
+
+        _characters.Clear();
+        _characters.AddRange(roster);
+        _currentCarouselIndex = 0;
+        RebuildCharacterCards();
+        await Task.Yield();
+        await ScrollToCharacterAsync(0);
+        StatusLabel.Text = $"Loaded roster from {fileName}";
+    }
+
     private async void OnSaveRosterClicked(object? sender, EventArgs e)
     {
         try
         {
-            var path = await _dataService.SaveRosterAsync(_characters);
+            var path = WindowsFileDialog.ShowSaveRosterDialog();
+            if (path is null)
+                return;
+
+            if (!string.Equals(System.IO.Path.GetExtension(path), ".hqct", StringComparison.OrdinalIgnoreCase))
+                path = System.IO.Path.ChangeExtension(path, ".hqct");
+
+            await _dataService.SaveRosterAsync(_characters, path);
             StatusLabel.Text = $"Saved {_characters.Count} characters to {path}";
         }
         catch (Exception exception)
